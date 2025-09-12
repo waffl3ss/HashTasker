@@ -1,0 +1,31 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  session_key: "change-this-to-a-secure-random-string"
+  upload_path: "./uploads"
+  static_path: "./web/static"
+  template_path: "./web/templates"
+  wordlists_path: "./wordlists"
+  rulesets_path: "./rules"
+  hashmodes_path: "./hashmodes.txt"
+
+database:
+  host: "localhost"
+  port: 3306
+  user: "hashtasker"
+  password: "your-secure-password"
+  database: "hashtasker"
+
+ldap:
+  enabled: false
+  host: "ldap.example.com"
+  port: 389
+  bind_dn: "cn=admin,dc=example,dc=com"
+  bind_pass: "your-ldap-password"
+  base_dn: "ou=users,dc=example,dc=com"
+  user_filter: "(uid=%s)"
+  admin_group: "cn=admins,ou=groups,dc=example,dc=com"
+
+admin:
+  username: "admin"
+  password: "changeme"

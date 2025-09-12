@@ -1,0 +1,205 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+<script>
+    // Apply saved theme immediately to prevent flash
+    (function() {
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-bs-theme', savedTheme);
+    })();
+</script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.title}}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {{template "head" .}}
+</head>
+<body>
+    {{if .user}}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-lock"></i> HashTasker
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="bi bi-speedometer2"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/jobs"><i class="bi bi-list-task"></i> Jobs</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/jobs/create"><i class="bi bi-plus-circle"></i> Create Job</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/system-stats"><i class="bi bi-cpu"></i> System Stats</a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle"></i> {{.user.Username}}
+                            {{if .user.IsAdmin}}<span class="badge bg-warning">Admin</span>{{end}}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="/profile" class="dropdown-item">
+                                    <i class="bi bi-person"></i> Profile
+                                </a>
+                            </li>
+                            {{if .user.IsAdmin}}
+                            <li>
+                                <a href="/admin/users" class="dropdown-item">
+                                    <i class="bi bi-people-fill"></i> Manage Users
+                                </a>
+                            </li>
+                            {{end}}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <button id="themeToggle" class="dropdown-item">
+                                    <i class="bi bi-moon-fill"></i> <span id="themeText">Dark Mode</span>
+                                </button>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="POST" action="/logout" class="m-0">
+                                    <button type="submit" class="dropdown-item">
+                                        <i class="bi bi-box-arrow-right"></i> Logout
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {{end}}
+
+    <main class="container mt-4">
+        {{if eq .template "jobs"}}
+            {{template "jobs-content" .}}
+        {{else if eq .template "dashboard"}}
+            {{template "dashboard-content" .}}
+        {{else if eq .template "create_job"}}
+            {{template "create_job-content" .}}
+        {{else if eq .template "system_stats"}}
+            {{template "system_stats-content" .}}
+        {{else if eq .template "job_details"}}
+            {{template "job_details-content" .}}
+        {{else if eq .template "profile"}}
+            {{template "profile-content" .}}
+        {{else if eq .template "user_management"}}
+            {{template "user_management-content" .}}
+        {{else}}
+            {{template "dashboard-content" .}}
+        {{end}}
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer navbar-dark bg-dark fixed-bottom">
+        <div class="container">
+            <div class="text-center py-2">
+                <span class="footer-text">
+                    <span class="footer-version">v1.0.3</span> &nbsp;|&nbsp; 
+                    <a href="https://github.com/waffl3ss" target="_blank" class="footer-link">
+                        <i class="bi bi-github"></i> GITHUB
+                    </a> &nbsp;|&nbsp; 
+                    <a href="https://keybase.io/waffless" target="_blank" class="footer-link">
+                        <i class="bi bi-key"></i> KEYBASE
+                    </a>
+                    <!-- &nbsp;|&nbsp; <a href="#" class="footer-link">DONATE</a> -->
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js"></script>
+    
+    <!-- Dark Mode Toggle Script -->
+    <script>
+        // Dark mode functionality
+        (function() {
+            const htmlElement = document.documentElement;
+            
+            // Wait for DOM to be ready
+            function initThemeToggle() {
+                const themeToggle = document.getElementById('themeToggle');
+                const themeText = document.getElementById('themeText');
+                
+                if (!themeToggle || !themeText) {
+                    // Elements not ready yet, wait a bit
+                    setTimeout(initThemeToggle, 100);
+                    return;
+                }
+                
+                const themeIcon = themeToggle.querySelector('i');
+                
+                // Load saved theme and update UI
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                setTheme(savedTheme);
+                
+                // Toggle theme on button click
+                themeToggle.addEventListener('click', function() {
+                    const currentTheme = htmlElement.getAttribute('data-bs-theme');
+                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    setTheme(newTheme);
+                    localStorage.setItem('theme', newTheme);
+                });
+                
+                function setTheme(theme) {
+                    htmlElement.setAttribute('data-bs-theme', theme);
+                    
+                    if (theme === 'dark') {
+                        themeText.textContent = 'Light Mode';
+                        themeIcon.className = 'bi bi-sun-fill';
+                    } else {
+                        themeText.textContent = 'Dark Mode';
+                        themeIcon.className = 'bi bi-moon-fill';
+                    }
+                    
+                    // Update charts if they exist
+                    if (typeof updateProgressChart === 'function' && typeof jobData !== 'undefined' && jobData) {
+                        updateProgressChart();
+                    }
+                }
+            }
+            
+            // Initialize when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initThemeToggle);
+            } else {
+                initThemeToggle();
+            }
+        })();
+    </script>
+    {{if eq .template "jobs"}}
+        {{template "jobs-scripts" .}}
+    {{else if eq .template "dashboard"}}
+        {{template "dashboard-scripts" .}}
+    {{else if eq .template "create_job"}}
+        {{template "create_job-scripts" .}}
+    {{else if eq .template "system_stats"}}
+        {{template "system_stats-scripts" .}}
+    {{else if eq .template "job_details"}}
+        {{template "job_details-scripts" .}}
+    {{else if eq .template "profile"}}
+        {{template "profile-scripts" .}}
+    {{else if eq .template "user_management"}}
+        {{template "user_management-scripts" .}}
+    {{end}}
+</body>
+</html>
+{{end}}
