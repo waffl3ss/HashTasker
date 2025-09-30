@@ -1,0 +1,774 @@
+/* HashTasker Custom Styles */
+
+:root {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.progress {
+    height: 8px;
+}
+
+.status-online {
+    color: var(--success-color);
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+.status-offline {
+    color: var(--danger-color);
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.gpu-usage {
+    font-size: 0.875rem;
+}
+
+.gpu-usage .progress {
+    height: 4px;
+}
+
+.job-status {
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.job-progress .progress {
+    height: 20px;
+}
+
+.job-progress .progress-bar {
+    font-size: 0.8rem;
+    line-height: 20px;
+}
+
+.table-actions {
+    white-space: nowrap;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.searchable-dropdown {
+    position: relative;
+}
+
+.searchable-dropdown input[type="text"] {
+    width: 100%;
+}
+
+.searchable-dropdown .dropdown-menu {
+    width: 100%;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.hash-display {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    word-break: break-all;
+}
+
+.password-display {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+}
+
+.password-hidden::before {
+    content: attr(data-password);
+    filter: blur(4px);
+    user-select: none;
+}
+
+.worker-card {
+    transition: all 0.2s ease;
+}
+
+.worker-card:hover {
+    transform: translateY(-2px);
+}
+
+.gpu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.gpu-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.pie-chart-container {
+    position: relative;
+    height: 300px;
+    width: 300px;
+    margin: 0 auto;
+}
+
+.loading-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 0.125em solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    padding: 2rem;
+    text-align: center;
+    background-color: #f8f9fa;
+    transition: all 0.2s ease;
+}
+
+.file-upload-area:hover {
+    border-color: var(--primary-color);
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.file-upload-area.dragover {
+    border-color: var(--success-color);
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+.job-details-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--info-color) 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.worker-progress {
+    margin-bottom: 0.5rem;
+}
+
+.worker-progress .progress {
+    height: 12px;
+}
+
+.cracked-hashes-table {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Static column widths for cracked hashes table */
+.cracked-hashes-table-layout {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.cracked-hashes-table-layout .hash-column {
+    width: auto; /* Takes remaining space */
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow-wrap: break-word;
+}
+
+.cracked-hashes-table-layout .password-column {
+    width: 20rem; /* ~60 chars at current font size */
+    word-wrap: break-word;
+    word-break: break-all;
+    overflow-wrap: break-word;
+}
+
+.cracked-hashes-table-layout .recovery-time-column {
+    width: 9rem; /* Enough for "Recovery Time" header */
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Ensure content doesn't overflow columns */
+.cracked-hashes-table-layout td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cracked-hashes-table-layout .hash-column,
+.cracked-hashes-table-layout .password-column {
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] {
+    --primary-color: #0d6efd;
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --info-color: #0dcaf0;
+    --bs-body-color: #ffffff;
+    --bs-body-bg: #212529;
+}
+
+[data-bs-theme="dark"] body {
+    background-color: #212529;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .card {
+    background-color: #343a40;
+    border: 1px solid #495057;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .card-header {
+    background-color: #495057;
+    border-bottom: 1px solid #6c757d;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .file-upload-area {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: #fff;
+}
+
+[data-bs-theme="dark"] .file-upload-area:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+[data-bs-theme="dark"] .gpu-card {
+    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+}
+
+[data-bs-theme="dark"] .job-details-header {
+    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+}
+
+[data-bs-theme="dark"] .metric-label {
+    color: #adb5bd;
+}
+
+[data-bs-theme="dark"] .loading-spinner {
+    border-color: #adb5bd;
+    border-right-color: transparent;
+}
+
+[data-bs-theme="dark"] .pie-chart-container canvas {
+    background-color: transparent;
+}
+
+[data-bs-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) {
+    --bs-table-accent-bg: rgba(255, 255, 255, 0.05);
+}
+
+[data-bs-theme="dark"] .table-striped > tbody > tr:nth-of-type(odd) > td {
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .table-striped > tbody > tr > td {
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .table-striped > tbody > tr > td * {
+    color: #ffffff !important;
+}
+
+/* Specific fix for recovered hashes table */
+[data-bs-theme="dark"] .cracked-hashes-table .table td {
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .cracked-hashes-table .table .hash-display,
+[data-bs-theme="dark"] .cracked-hashes-table .table .password-display {
+    color: #ffffff !important;
+}
+
+/* Form elements in dark mode */
+[data-bs-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-select {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .form-control:focus,
+[data-bs-theme="dark"] .form-select:focus {
+    background-color: #495057;
+    border-color: #0d6efd;
+    color: #ffffff;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+[data-bs-theme="dark"] .form-control::placeholder {
+    color: #adb5bd;
+}
+
+[data-bs-theme="dark"] .form-check-input {
+    background-color: #495057;
+    border-color: #6c757d;
+}
+
+[data-bs-theme="dark"] .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+[data-bs-theme="dark"] .form-label {
+    color: #ffffff;
+}
+
+/* Dropdown menus */
+[data-bs-theme="dark"] .dropdown-menu {
+    background-color: #343a40;
+    border: 1px solid #495057;
+}
+
+[data-bs-theme="dark"] .dropdown-item {
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .dropdown-item:hover,
+[data-bs-theme="dark"] .dropdown-item:focus {
+    background-color: #495057;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .dropdown-divider {
+    border-color: #6c757d;
+}
+
+/* Text colors */
+[data-bs-theme="dark"] .text-muted {
+    color: #adb5bd !important;
+}
+
+[data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3, 
+[data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6 {
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .breadcrumb-item a {
+    color: #0d6efd;
+}
+
+[data-bs-theme="dark"] .breadcrumb-item.active {
+    color: #adb5bd;
+}
+
+/* Searchable dropdown dark mode */
+[data-bs-theme="dark"] .searchable-dropdown .dropdown-menu {
+    background-color: #343a40;
+    border: 1px solid #495057;
+}
+
+[data-bs-theme="dark"] .searchable-dropdown .dropdown-item {
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .searchable-dropdown .dropdown-item:hover {
+    background-color: #495057;
+}
+
+/* Table elements */
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: transparent;
+    --bs-table-color: #ffffff;
+}
+
+[data-bs-theme="dark"] .table th {
+    border-color: #495057;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .table td {
+    border-color: #495057;
+    color: #ffffff;
+}
+
+/* Button adjustments */
+[data-bs-theme="dark"] .btn-outline-secondary {
+    color: #6c757d;
+    border-color: #6c757d;
+}
+
+[data-bs-theme="dark"] .btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: #ffffff;
+}
+
+/* Alert/modal elements if any */
+[data-bs-theme="dark"] .modal-content {
+    background-color: #343a40;
+    border: 1px solid #495057;
+}
+
+[data-bs-theme="dark"] .modal-header {
+    border-bottom: 1px solid #495057;
+}
+
+[data-bs-theme="dark"] .modal-footer {
+    border-top: 1px solid #495057;
+}
+
+/* Progress bars */
+[data-bs-theme="dark"] .progress {
+    background-color: #495057;
+}
+
+/* Small text elements */
+[data-bs-theme="dark"] small {
+    color: #adb5bd;
+}
+
+/* Pagination styling for dark mode */
+[data-bs-theme="dark"] .pagination .page-link {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .pagination .page-link:hover {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .pagination .page-item.active .page-link {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-bs-theme="dark"] .pagination .page-item.active .page-link:hover,
+[data-bs-theme="dark"] .pagination .page-item.active .page-link:focus {
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+    color: #ffffff !important;
+    font-weight: bold !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-bs-theme="dark"] .pagination .page-item.disabled .page-link {
+    background-color: #212529;
+    border-color: #495057;
+    color: #6c757d;
+}
+
+/* General text color fixes */
+[data-bs-theme="dark"] .fw-medium,
+[data-bs-theme="dark"] .fw-bold {
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] a {
+    color: #0d6efd !important;
+}
+
+[data-bs-theme="dark"] a:hover {
+    color: #0a58ca !important;
+}
+
+[data-bs-theme="dark"] a.text-decoration-none {
+    color: #0d6efd !important;
+}
+
+[data-bs-theme="dark"] a.text-decoration-none:hover {
+    color: #0a58ca !important;
+}
+
+/* Dashboard specific fixes */
+[data-bs-theme="dark"] .worker-card {
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .worker-card h5,
+[data-bs-theme="dark"] .worker-card h6,
+[data-bs-theme="dark"] .worker-card p,
+[data-bs-theme="dark"] .worker-card div {
+    color: #ffffff;
+}
+
+/* Jobs page specific fixes */
+[data-bs-theme="dark"] .table tbody tr td {
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .table tbody tr td .fw-medium {
+    color: #ffffff !important;
+}
+
+/* Dropdown option text */
+[data-bs-theme="dark"] .form-select option {
+    background-color: #495057;
+    color: #ffffff;
+}
+
+/* Progress bar text inside bars */
+[data-bs-theme="dark"] .progress-bar {
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+/* Badge text colors */
+[data-bs-theme="dark"] .badge {
+    color: #ffffff;
+}
+
+/* List group items if any */
+[data-bs-theme="dark"] .list-group-item {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #ffffff;
+}
+
+/* Card title and text */
+[data-bs-theme="dark"] .card-title,
+[data-bs-theme="dark"] .card-text {
+    color: #ffffff;
+}
+
+/* Nav link colors */
+[data-bs-theme="dark"] .nav-link {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+[data-bs-theme="dark"] .nav-link:hover,
+[data-bs-theme="dark"] .nav-link:focus {
+    color: #ffffff;
+}
+
+/* Additional specific text fixes */
+[data-bs-theme="dark"] .metric-value {
+    color: #0d6efd !important;
+}
+
+[data-bs-theme="dark"] div,
+[data-bs-theme="dark"] span,
+[data-bs-theme="dark"] p {
+    color: inherit;
+}
+
+/* Ensure all text in cards is white */
+[data-bs-theme="dark"] .card * {
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .card .text-muted {
+    color: #adb5bd !important;
+}
+
+[data-bs-theme="dark"] .card .badge {
+    color: #ffffff;
+}
+
+/* Table cell content */
+[data-bs-theme="dark"] .table td > * {
+    color: #ffffff;
+}
+
+/* Preserve link colors in tables */
+[data-bs-theme="dark"] .table td a,
+[data-bs-theme="dark"] .table td .text-decoration-none {
+    color: #0d6efd !important;
+}
+
+[data-bs-theme="dark"] .table td a:hover,
+[data-bs-theme="dark"] .table td .text-decoration-none:hover {
+    color: #0a58ca !important;
+}
+
+/* GPU usage text */
+[data-bs-theme="dark"] .gpu-usage {
+    color: #ffffff;
+}
+
+/* Progress text */
+[data-bs-theme="dark"] .job-progress .progress-bar {
+    color: #ffffff !important;
+    font-weight: bold;
+}
+
+/* System stats specific progress bars - FORCE WHITE TEXT */
+[data-bs-theme="dark"] .progress .progress-bar {
+    color: #ffffff !important;
+    font-weight: bold !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Additional specificity for system stats page */
+[data-bs-theme="dark"] .progress-bar * {
+    color: #ffffff !important;
+}
+
+/* Most specific rule for percentage text inside progress bars */
+[data-bs-theme="dark"] .progress-bar,
+[data-bs-theme="dark"] .progress-bar span,
+[data-bs-theme="dark"] .progress-bar div {
+    color: #ffffff !important;
+    font-weight: bold !important;
+}
+
+/* NUCLEAR OPTION - Force ALL text in progress bars to be white */
+[data-bs-theme="dark"] .progress-bar,
+[data-bs-theme="dark"] .progress-bar *,
+[data-bs-theme="dark"] .progress .progress-bar,
+[data-bs-theme="dark"] .progress .progress-bar *,
+[data-bs-theme="dark"] .progress-bar:before,
+[data-bs-theme="dark"] .progress-bar:after {
+    color: #ffffff !important;
+    font-weight: bold !important;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Target Bootstrap's default progress bar text */
+[data-bs-theme="dark"] .progress-bar .sr-only {
+    color: #ffffff !important;
+}
+
+/* Force progress text to be white in dark mode and black in light mode */
+[data-bs-theme="dark"] .progress-text {
+    color: #ffffff !important;
+}
+
+[data-bs-theme="light"] .progress-text {
+    color: #000000 !important;
+}
+
+/* Button text colors in dark mode */
+[data-bs-theme="dark"] .btn-primary {
+    color: #ffffff !important;
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+[data-bs-theme="dark"] .btn-primary:hover {
+    color: #ffffff !important;
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+}
+
+/* Ensure text color inheritance */
+[data-bs-theme="dark"] .text-decoration-none {
+    color: inherit;
+}
+
+/* Body padding for fixed header and footer */
+body {
+    padding-top: 70px; /* Space for fixed header */
+    padding-bottom: 50px; /* Space for fixed footer */
+}
+
+
+/* Footer styling - matches navbar */
+.footer {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+}
+
+/* Footer colors - exactly match Bootstrap navbar-dark nav-link colors */
+.footer-text {
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.55); /* Bootstrap navbar-dark nav-link default */
+}
+
+.footer-version {
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: bold;
+}
+
+.footer-link {
+    color: rgba(255, 255, 255, 0.55) !important;
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.15s ease-in-out;
+}
+
+.footer-link:hover {
+    color: rgba(255, 255, 255, 0.75) !important; /* Bootstrap navbar-dark nav-link hover */
+    text-decoration: none;
+}
+
+/* Dark mode footer colors */
+[data-bs-theme="dark"] .footer-version {
+    color: #0d6efd !important; /* Same blue as links */
+}
+
+/* Make header stand out more in dark mode */
+[data-bs-theme="dark"] .navbar-dark {
+    background-color: #1a1a1a !important;
+    border-bottom: 1px solid #333333;
+}
+
+[data-bs-theme="dark"] .footer {
+    background-color: #1a1a1a !important;
+    border-top: 1px solid #333333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .gpu-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .pie-chart-container {
+        height: 250px;
+        width: 250px;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-sm {
+        padding: 0.125rem 0.25rem;
+        font-size: 0.75rem;
+    }
+}

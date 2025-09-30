@@ -1,0 +1,1105 @@
+{{define "head"}}{{end}}
+
+{{define "create_job-content"}}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-plus-circle"></i> Create Job</h1>
+            <a href="/jobs" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Jobs
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-gear"></i> Job Configuration</h5>
+            </div>
+            <div class="card-body">
+                <form id="createJobForm" enctype="multipart/form-data">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="jobName" class="form-label">Job Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="jobName" name="name" required 
+                                   placeholder="Enter job name">
+                            <div class="form-text">Give your job a descriptive name</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="hashMode" class="form-label">Hash Mode <span class="text-danger">*</span></label>
+                            <div class="searchable-dropdown">
+                                <input type="text" class="form-control" id="hashModeSearch" 
+                                       placeholder="Search hash modes..." autocomplete="off">
+                                <input type="hidden" id="hashMode" name="hash_mode" required>
+                                <div class="dropdown-menu w-100" id="hashModeDropdown">
+                                    <div class="text-center p-2">
+                                        <div class="loading-spinner me-2"></div>
+                                        Loading hash modes...
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-text">Select the hash algorithm to crack</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="form-label">Wordlist <span class="text-danger">*</span></label>
+                            <ul class="nav nav-tabs" id="wordlistTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="preset-wordlist-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#preset-wordlist-pane" type="button" role="tab">
+                                        <i class="bi bi-list"></i> Preset Wordlists
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="custom-wordlist-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#custom-wordlist-pane" type="button" role="tab">
+                                        <i class="bi bi-cloud-upload"></i> Custom Wordlist
+                                    </button>
+                                </li>
+                            </ul>
+                            <div class="tab-content" id="wordlistTabContent">
+                                <div class="tab-pane fade show active" id="preset-wordlist-pane" role="tabpanel">
+                                    <div class="mt-3">
+                                        <div class="searchable-dropdown">
+                                            <input type="text" class="form-control" id="wordlistSearch" 
+                                                   placeholder="Search wordlists..." autocomplete="off">
+                                            <input type="hidden" id="wordlist" name="wordlist">
+                                            <div class="dropdown-menu w-100" id="wordlistDropdown">
+                                                <div class="text-center p-2">
+                                                    <div class="loading-spinner me-2"></div>
+                                                    Loading wordlists...
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="form-text">Choose a preset wordlist for the attack</div>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="custom-wordlist-pane" role="tabpanel">
+                                    <div class="file-upload-area mt-3" id="wordlistUploadArea">
+                                        <i class="bi bi-cloud-upload fs-1 text-muted mb-3"></i>
+                                        <p class="mb-2">Drop your wordlist file here or click to browse</p>
+                                        <input type="file" class="form-control" id="wordlistFile" name="wordlist_file" 
+                                               accept=".txt,.wordlist" style="display: none;">
+                                        <button type="button" class="btn btn-outline-primary" id="browseWordlistButton">
+                                            <i class="bi bi-folder2-open"></i> Browse Files
+                                        </button>
+                                        <div class="form-text mt-2">Supported formats: .txt, .wordlist (max 100MB)</div>
+                                    </div>
+                                    <div id="wordlistFileInfo" class="mt-3" style="display: none;">
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-file-earmark-text"></i>
+                                            <strong id="wordlistFileName"></strong>
+                                            <span id="wordlistFileSize" class="text-muted"></span>
+                                            <button type="button" class="btn-close float-end" id="removeWordlistFile"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Rulesets</label>
+                        <div id="rulesetContainer">
+                            <div class="ruleset-item mb-2">
+                                <div class="input-group">
+                                    <div class="searchable-dropdown flex-grow-1">
+                                        <input type="text" class="form-control" id="rulesetSearch0" 
+                                               placeholder="Search rulesets..." autocomplete="off">
+                                        <input type="hidden" name="rulesets" id="ruleset0">
+                                        <div class="dropdown-menu w-100" id="rulesetDropdown0">
+                                            <div class="text-center p-2">
+                                                <div class="loading-spinner me-2"></div>
+                                                Loading rulesets...
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-success" id="addRulesetBtn">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-text">Select transformation rules to apply (optional)</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="disablePotfile" name="disable_potfile">
+                            <label class="form-check-label" for="disablePotfile">
+                                Disable Potfile
+                            </label>
+                            <div class="form-text">Disables the potfile functionality (prevents saving previously cracked hashes)</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Hashes to Crack <span class="text-danger">*</span></label>
+                        <ul class="nav nav-tabs" id="hashesTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="paste-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#paste-pane" type="button" role="tab">
+                                    <i class="bi bi-clipboard"></i> Paste Hashes
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="upload-tab" data-bs-toggle="tab" 
+                                        data-bs-target="#upload-pane" type="button" role="tab">
+                                    <i class="bi bi-file-earmark-text"></i> Upload File
+                                </button>
+                            </li>
+                        </ul>
+                        <div class="tab-content" id="hashesTabContent">
+                            <div class="tab-pane fade show active" id="paste-pane" role="tabpanel">
+                                <div class="hash-editor-container mt-3">
+                                    <div class="hash-editor">
+                                        <div class="line-numbers" id="lineNumbers">1</div>
+                                        <textarea class="form-control hash-textarea" id="hashesText" name="hashes_text"
+                                                  placeholder="Paste your hashes here, one per line&#10;&#10;Example:&#10;5d41402abc4b2a76b9719d911017c592&#10;098f6bcd4621d373cade4e832627b4f6&#10;482c811da5d5b4bc6d497ffa98491e38"></textarea>
+                                    </div>
+                                </div>
+                                <div class="form-text">Paste hashes one per line</div>
+                            </div>
+                            <div class="tab-pane fade" id="upload-pane" role="tabpanel">
+                                <div class="file-upload-area mt-3" id="fileUploadArea">
+                                    <i class="bi bi-cloud-upload fs-1 text-muted mb-3"></i>
+                                    <p class="mb-2">Drop your hash file here or click to browse</p>
+                                    <input type="file" class="form-control" id="hashesFile" name="hashes_file" 
+                                           accept=".txt,.hash" style="display: none;">
+                                    <button type="button" class="btn btn-outline-primary" id="browseButton">
+                                        <i class="bi bi-folder2-open"></i> Browse Files
+                                    </button>
+                                    <div class="form-text mt-2">Supported formats: .txt, .hash (max 50MB)</div>
+                                </div>
+                                <div id="fileInfo" class="mt-3" style="display: none;">
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                        <strong id="fileName"></strong>
+                                        <span id="fileSize" class="text-muted"></span>
+                                        <button type="button" class="btn-close float-end" id="removeFile"></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" id="resetForm">
+                            <i class="bi bi-arrow-clockwise"></i> Reset Form
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="submitButton">
+                            <i class="bi bi-play-circle"></i> Create Job
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "create_job-scripts"}}
+<script>
+let hashModes = [];
+let wordlists = [];
+let rulesets = [];
+
+let rulesetCounter = 0;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadHashModes();
+    loadWordlists();
+    loadRulesets();
+    setupFileUpload();
+    setupWordlistUpload();
+    setupMultipleRulesets();
+    setupForm();
+    setupHashTextareaLineNumbers();
+    
+    // Check if we're copying a job
+    const copyData = sessionStorage.getItem('copyJobData');
+    if (copyData) {
+        sessionStorage.removeItem('copyJobData');
+        try {
+            const jobData = JSON.parse(copyData);
+            // Wait a bit for data to load before populating
+            setTimeout(() => populateFormForCopy(jobData), 1000);
+        } catch (e) {
+            console.error('Error parsing copy job data:', e);
+        }
+    }
+});
+
+function loadHashModes() {
+    fetch('/api/jobs/hash-modes')
+        .then(response => response.json())
+        .then(data => {
+            hashModes = data;
+            setupSearchableDropdown('hashMode', hashModes, (item) => `
+                <div class="p-2 border-bottom">
+                    <div class="fw-medium">${item.mode} - ${item.name}</div>
+                    <small class="text-muted">${item.description}</small>
+                </div>
+            `, (item) => item.mode, (item) => `${item.mode} - ${item.name}`);
+        })
+        .catch(error => console.error('Error loading hash modes:', error));
+}
+
+function loadWordlists() {
+    fetch('/api/jobs/wordlists')
+        .then(response => response.json())
+        .then(data => {
+            wordlists = data;
+            setupSearchableDropdown('wordlist', wordlists, (item) => `
+                <div class="p-2 border-bottom">
+                    <div class="fw-medium">${item.name}</div>
+                    <small class="text-muted">Size: ${formatFileSize(item.size)} | Modified: ${item.modified}</small>
+                </div>
+            `, (item) => item.path, (item) => item.name);
+        })
+        .catch(error => console.error('Error loading wordlists:', error));
+}
+
+function loadRulesets() {
+    fetch('/api/jobs/rulesets')
+        .then(response => response.json())
+        .then(data => {
+            rulesets = data;
+            // Setup initial ruleset dropdown
+            setupRulesetDropdown(0);
+        })
+        .catch(error => console.error('Error loading rulesets:', error));
+}
+
+function setupSearchableDropdown(fieldName, items, renderItem, getValue, getDisplay) {
+    const searchInput = document.getElementById(fieldName + 'Search');
+    const hiddenInput = document.getElementById(fieldName);
+    const dropdown = document.getElementById(fieldName + 'Dropdown');
+    
+    function renderDropdown(filteredItems) {
+        if (filteredItems.length === 0) {
+            dropdown.innerHTML = '<div class="p-2 text-muted">No results found</div>';
+            return;
+        }
+        
+        dropdown.innerHTML = '';
+        filteredItems.forEach(item => {
+            const div = document.createElement('div');
+            div.innerHTML = renderItem(item);
+            div.style.cursor = 'pointer';
+            div.addEventListener('click', () => {
+                hiddenInput.value = getValue(item);
+                searchInput.value = getDisplay(item);
+                dropdown.classList.remove('show');
+            });
+            dropdown.appendChild(div);
+        });
+    }
+    
+    searchInput.addEventListener('focus', () => {
+        renderDropdown(items);
+        dropdown.classList.add('show');
+    });
+    
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        const filtered = items.filter(item => 
+            getDisplay(item).toLowerCase().includes(query) ||
+            (item.description && item.description.toLowerCase().includes(query))
+        );
+        renderDropdown(filtered);
+        dropdown.classList.add('show');
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.searchable-dropdown')) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    // Initial render
+    renderDropdown(items);
+}
+
+function setupFileUpload() {
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('hashesFile');
+    const browseButton = document.getElementById('browseButton');
+    const fileInfo = document.getElementById('fileInfo');
+    const removeFileButton = document.getElementById('removeFile');
+    
+    browseButton.addEventListener('click', () => fileInput.click());
+    
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+    
+    fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('dragover');
+    });
+    
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFileSelect(files[0]);
+        }
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
+        }
+    });
+    
+    removeFileButton.addEventListener('click', () => {
+        fileInput.value = '';
+        fileInfo.style.display = 'none';
+    });
+    
+    function handleFileSelect(file) {
+        if (file.size > 50 * 1024 * 1024) { // 50MB limit
+            alert('File size must be less than 50MB');
+            return;
+        }
+        
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = ` (${formatFileSize(file.size)})`;
+        fileInfo.style.display = 'block';
+        
+        // Clear the text area when file is uploaded
+        document.getElementById('hashesText').value = '';
+    }
+}
+
+function setupForm() {
+    const form = document.getElementById('createJobForm');
+    const submitButton = document.getElementById('submitButton');
+    const resetButton = document.getElementById('resetForm');
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const hashesText = document.getElementById('hashesText').value.trim();
+        const hashesFile = document.getElementById('hashesFile').files[0];
+        
+        if (!hashesText && !hashesFile) {
+            alert('Please provide hashes either by pasting them or uploading a file.');
+            return;
+        }
+        
+        // Validate hash mode selection
+        const hashMode = document.getElementById('hashMode').value;
+        if (!hashMode) {
+            alert('Please select a valid hash mode from the dropdown list.');
+            document.getElementById('hashModeSearch').focus();
+            return;
+        }
+        
+        // Validate that the selected hash mode exists in our list
+        const isValidHashMode = hashModes.some(mode => mode.mode.toString() === hashMode);
+        if (!isValidHashMode) {
+            alert('Please select a valid hash mode from the dropdown list. Typed entries are not allowed.');
+            document.getElementById('hashModeSearch').focus();
+            document.getElementById('hashModeSearch').value = '';
+            document.getElementById('hashMode').value = '';
+            return;
+        }
+        
+        const wordlist = document.getElementById('wordlist').value;
+        const wordlistFile = document.getElementById('wordlistFile').files[0];
+        
+        if (!wordlist && !wordlistFile) {
+            alert('Please provide a wordlist either by selecting a preset wordlist or uploading a custom wordlist file.');
+            return;
+        }
+        
+        // If using preset wordlist, validate selection
+        if (wordlist && !wordlistFile) {
+            const isValidWordlist = wordlists.some(wl => wl.path === wordlist);
+            if (!isValidWordlist) {
+                alert('Please select a valid wordlist from the dropdown list. Typed entries are not allowed.');
+                document.getElementById('wordlistSearch').focus();
+                document.getElementById('wordlistSearch').value = '';
+                document.getElementById('wordlist').value = '';
+                return;
+            }
+        }
+        
+        // Validate ruleset selections if any are provided
+        const rulesetInputs = document.querySelectorAll('input[name="rulesets"]');
+        for (let i = 0; i < rulesetInputs.length; i++) {
+            const rulesetValue = rulesetInputs[i].value;
+            if (rulesetValue) {
+                const isValidRuleset = rulesets.some(rs => rs.path === rulesetValue);
+                if (!isValidRuleset) {
+                    alert(`Please select a valid ruleset from the dropdown list for ruleset ${i + 1}. Typed entries are not allowed.`);
+                    document.getElementById(`rulesetSearch${i}`).focus();
+                    document.getElementById(`rulesetSearch${i}`).value = '';
+                    rulesetInputs[i].value = '';
+                    return;
+                }
+            }
+        }
+        
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<div class="loading-spinner me-2"></div>Creating Job...';
+        
+        const formData = new FormData(form);
+        
+        try {
+            const response = await fetch('/api/jobs', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                alert('Job created successfully!');
+                window.location.href = `/jobs/${result.job_uid}`;
+            } else {
+                alert('Error: ' + (result.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error creating job:', error);
+            alert('Error creating job: ' + error.message);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.innerHTML = '<i class="bi bi-play-circle"></i> Create Job';
+        }
+    });
+    
+    resetButton.addEventListener('click', () => {
+        if (confirm('Are you sure you want to reset the form? All entered data will be lost.')) {
+            form.reset();
+            document.getElementById('hashMode').value = '';
+            document.getElementById('wordlist').value = '';
+            document.getElementById('hashModeSearch').value = '';
+            document.getElementById('wordlistSearch').value = '';
+            document.getElementById('fileInfo').style.display = 'none';
+            document.getElementById('wordlistFileInfo').style.display = 'none';
+            document.getElementById('disablePotfile').checked = false;
+            
+            // Reset rulesets to single empty one
+            const container = document.getElementById('rulesetContainer');
+            container.innerHTML = `
+                <div class="ruleset-item mb-2">
+                    <div class="input-group">
+                        <div class="searchable-dropdown flex-grow-1">
+                            <input type="text" class="form-control" id="rulesetSearch0" 
+                                   placeholder="Search rulesets..." autocomplete="off">
+                            <input type="hidden" name="rulesets" id="ruleset0">
+                            <div class="dropdown-menu w-100" id="rulesetDropdown0">
+                                <div class="text-center p-2">
+                                    <div class="loading-spinner me-2"></div>
+                                    Loading rulesets...
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-success" id="addRulesetBtn">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            rulesetCounter = 0;
+            setupRulesetDropdown(0);
+            setupMultipleRulesets();
+        }
+    });
+    
+    // Tab switching logic to clear other input
+    document.getElementById('paste-tab').addEventListener('click', () => {
+        document.getElementById('hashesFile').value = '';
+        document.getElementById('fileInfo').style.display = 'none';
+    });
+    
+    document.getElementById('upload-tab').addEventListener('click', () => {
+        document.getElementById('hashesText').value = '';
+    });
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function setupWordlistUpload() {
+    const wordlistUploadArea = document.getElementById('wordlistUploadArea');
+    const wordlistFileInput = document.getElementById('wordlistFile');
+    const browseWordlistButton = document.getElementById('browseWordlistButton');
+    const wordlistFileInfo = document.getElementById('wordlistFileInfo');
+    const removeWordlistFileButton = document.getElementById('removeWordlistFile');
+    
+    browseWordlistButton.addEventListener('click', () => wordlistFileInput.click());
+    
+    wordlistUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        wordlistUploadArea.classList.add('dragover');
+    });
+    
+    wordlistUploadArea.addEventListener('dragleave', () => {
+        wordlistUploadArea.classList.remove('dragover');
+    });
+    
+    wordlistUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        wordlistUploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleWordlistFileSelect(files[0]);
+        }
+    });
+    
+    wordlistFileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleWordlistFileSelect(e.target.files[0]);
+        }
+    });
+    
+    removeWordlistFileButton.addEventListener('click', () => {
+        wordlistFileInput.value = '';
+        wordlistFileInfo.style.display = 'none';
+        // Clear preset wordlist when custom is removed
+        document.getElementById('wordlist').value = '';
+        document.getElementById('wordlistSearch').value = '';
+    });
+    
+    function handleWordlistFileSelect(file) {
+        if (file.size > 100 * 1024 * 1024) { // 100MB limit
+            alert('Wordlist file size must be less than 100MB');
+            return;
+        }
+        
+        document.getElementById('wordlistFileName').textContent = file.name;
+        document.getElementById('wordlistFileSize').textContent = ` (${formatFileSize(file.size)})`;
+        wordlistFileInfo.style.display = 'block';
+        
+        // Clear the preset wordlist when file is uploaded
+        document.getElementById('wordlist').value = '';
+        document.getElementById('wordlistSearch').value = '';
+    }
+    
+    // Tab switching logic
+    document.getElementById('preset-wordlist-tab').addEventListener('click', () => {
+        wordlistFileInput.value = '';
+        wordlistFileInfo.style.display = 'none';
+    });
+    
+    document.getElementById('custom-wordlist-tab').addEventListener('click', () => {
+        document.getElementById('wordlist').value = '';
+        document.getElementById('wordlistSearch').value = '';
+    });
+}
+
+function setupMultipleRulesets() {
+    const addRulesetBtn = document.getElementById('addRulesetBtn');
+    const rulesetContainer = document.getElementById('rulesetContainer');
+    
+    addRulesetBtn.addEventListener('click', () => {
+        rulesetCounter++;
+        
+        const rulesetItem = document.createElement('div');
+        rulesetItem.className = 'ruleset-item mb-2';
+        rulesetItem.innerHTML = `
+            <div class="input-group">
+                <div class="searchable-dropdown flex-grow-1">
+                    <input type="text" class="form-control" id="rulesetSearch${rulesetCounter}" 
+                           placeholder="Search rulesets..." autocomplete="off">
+                    <input type="hidden" name="rulesets" id="ruleset${rulesetCounter}">
+                    <div class="dropdown-menu w-100" id="rulesetDropdown${rulesetCounter}">
+                        <div class="text-center p-2">
+                            <div class="loading-spinner me-2"></div>
+                            Loading rulesets...
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-outline-danger remove-ruleset-btn">
+                    <i class="bi bi-dash"></i>
+                </button>
+            </div>
+        `;
+        
+        rulesetContainer.appendChild(rulesetItem);
+        
+        // Setup dropdown for new ruleset
+        setupRulesetDropdown(rulesetCounter);
+        
+        // Add remove functionality
+        const removeBtn = rulesetItem.querySelector('.remove-ruleset-btn');
+        removeBtn.addEventListener('click', () => {
+            rulesetItem.remove();
+        });
+    });
+}
+
+function setupHashTextareaLineNumbers() {
+    const textarea = document.getElementById('hashesText');
+    const lineNumbers = document.getElementById('lineNumbers');
+    let isUpdating = false;
+
+    function updateLineNumbers() {
+        if (isUpdating) return;
+        isUpdating = true;
+
+        try {
+            // Get content and normalize line endings
+            const content = textarea.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+            // Count actual lines (empty content = 1 line)
+            const actualLines = content === '' ? [''] : content.split('\n');
+            const totalLines = actualLines.length;
+
+            // Calculate dynamic width based on the number of digits in the highest line number
+            const maxDigits = totalLines.toString().length;
+            // Balanced width calculation: tight but prevents wrapping
+            const baseWidth = Math.max(3.5, maxDigits * 0.7 + 1.2); // More balanced
+            lineNumbers.style.minWidth = baseWidth + 'rem';
+            lineNumbers.style.width = baseWidth + 'rem';
+
+            // Reset textarea height to auto to get accurate scrollHeight
+            textarea.style.height = 'auto';
+            const scrollHeight = textarea.scrollHeight;
+            const finalHeight = Math.max(200, scrollHeight + 5);
+            textarea.style.height = finalHeight + 'px';
+
+            // Use a more accurate method: create a hidden div that mimics the textarea
+            const measureDiv = document.createElement('div');
+            const style = window.getComputedStyle(textarea);
+
+            // Copy all relevant styles from textarea
+            measureDiv.style.cssText = `
+                position: absolute;
+                visibility: hidden;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                word-break: break-all;
+                overflow-wrap: break-word;
+                font-family: ${style.fontFamily};
+                font-size: ${style.fontSize};
+                line-height: ${style.lineHeight};
+                padding-left: ${style.paddingLeft};
+                padding-right: ${style.paddingRight};
+                border: ${style.border};
+                box-sizing: ${style.boxSizing};
+                width: ${textarea.clientWidth}px;
+                top: -9999px;
+                left: -9999px;
+            `;
+
+            document.body.appendChild(measureDiv);
+
+            const lineNumbersArray = [];
+            const lineHeight = parseFloat(style.lineHeight) || (parseFloat(style.fontSize) * 1.5);
+
+            actualLines.forEach((line, index) => {
+                const lineNumber = index + 1;
+
+                // Always add the line number for this actual line
+                lineNumbersArray.push(lineNumber.toString());
+
+                // Calculate visual lines for this actual line
+                if (line.length > 0) {
+                    measureDiv.textContent = line;
+                    const divHeight = measureDiv.offsetHeight;
+                    const visualLines = Math.max(1, Math.round(divHeight / lineHeight));
+
+                    // Add empty strings for wrapped portions
+                    for (let i = 1; i < visualLines; i++) {
+                        lineNumbersArray.push('');
+                    }
+                }
+            });
+
+            // Clean up
+            document.body.removeChild(measureDiv);
+
+            // Set the line numbers
+            lineNumbers.textContent = lineNumbersArray.join('\n');
+            lineNumbers.style.height = finalHeight + 'px';
+
+        } catch (error) {
+            console.error('Error updating line numbers:', error);
+            // Fallback to simple line numbers
+            const content = textarea.value.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const lines = content === '' ? 1 : content.split('\n').length;
+            const numbers = [];
+            for (let i = 1; i <= lines; i++) {
+                numbers.push(i);
+            }
+            lineNumbers.textContent = numbers.join('\n');
+            lineNumbers.style.minWidth = '3rem';
+            textarea.style.height = '200px';
+        } finally {
+            isUpdating = false;
+        }
+    }
+
+    function syncScroll() {
+        if (isUpdating) return;
+        lineNumbers.scrollTop = textarea.scrollTop;
+    }
+
+    function debounceUpdate() {
+        clearTimeout(window.hashUpdateTimeout);
+        window.hashUpdateTimeout = setTimeout(updateLineNumbers, 5);
+    }
+
+    // Make updateLineNumbers globally accessible for copy function
+    window.updateHashTextareaLineNumbers = updateLineNumbers;
+
+    // Initial update
+    updateLineNumbers();
+
+    // Update line numbers on various events
+    textarea.addEventListener('input', debounceUpdate);
+    textarea.addEventListener('paste', () => {
+        // Multiple timeouts to handle different paste scenarios
+        setTimeout(updateLineNumbers, 10);
+        setTimeout(updateLineNumbers, 50);
+        setTimeout(updateLineNumbers, 100);
+    });
+    textarea.addEventListener('keyup', debounceUpdate);
+    textarea.addEventListener('change', updateLineNumbers);
+
+    // Sync scrolling
+    textarea.addEventListener('scroll', syncScroll);
+
+    // Handle form reset
+    const resetButton = document.getElementById('resetForm');
+    if (resetButton) {
+        resetButton.addEventListener('click', () => {
+            setTimeout(updateLineNumbers, 50);
+        });
+    }
+
+    // Handle window resize
+    window.addEventListener('resize', debounceUpdate);
+}
+
+// Universal hash text setter - handles any hash format safely
+function setHashText(text) {
+    const textarea = document.getElementById('hashesText');
+    const lineNumbers = document.getElementById('lineNumbers');
+
+    if (!textarea || !lineNumbers) {
+        console.error('Hash textarea elements not found');
+        return;
+    }
+
+    try {
+        // Normalize the input text
+        const normalizedText = (text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+
+        // Clear the textarea completely
+        textarea.value = '';
+        textarea.style.height = 'auto';
+
+        // Reset line numbers to default
+        lineNumbers.textContent = '1';
+        lineNumbers.style.minWidth = '3rem';
+        lineNumbers.style.width = '3rem';
+        lineNumbers.style.height = 'auto';
+
+        // Force a layout recalculation
+        textarea.offsetHeight;
+        lineNumbers.offsetHeight;
+
+        // Set the new content
+        textarea.value = normalizedText;
+
+        // Force the textarea to recalculate its content
+        textarea.focus();
+        textarea.setSelectionRange(0, 0); // Move cursor to start
+        textarea.blur();
+
+        // Multiple update attempts to handle different rendering timings
+        const updateSequence = [0, 10, 50, 100, 200];
+        updateSequence.forEach(delay => {
+            setTimeout(() => {
+                if (window.updateHashTextareaLineNumbers) {
+                    window.updateHashTextareaLineNumbers();
+                }
+            }, delay);
+        });
+
+    } catch (error) {
+        console.error('Error setting hash text:', error);
+        // Fallback: simple set
+        textarea.value = text || '';
+        setTimeout(() => {
+            if (window.updateHashTextareaLineNumbers) {
+                window.updateHashTextareaLineNumbers();
+            }
+        }, 100);
+    }
+}
+
+function setupRulesetDropdown(index) {
+    const searchInput = document.getElementById(`rulesetSearch${index}`);
+    const hiddenInput = document.getElementById(`ruleset${index}`);
+    const dropdown = document.getElementById(`rulesetDropdown${index}`);
+    
+    function renderDropdown(filteredItems) {
+        if (filteredItems.length === 0) {
+            dropdown.innerHTML = '<div class="p-2 text-muted">No results found</div>';
+            return;
+        }
+        
+        dropdown.innerHTML = '';
+        filteredItems.forEach(item => {
+            const div = document.createElement('div');
+            div.innerHTML = `
+                <div class="p-2 border-bottom">
+                    <div class="fw-medium">${item.name}</div>
+                    <small class="text-muted">${item.rules} rules | Modified: ${item.modified}</small>
+                </div>
+            `;
+            div.style.cursor = 'pointer';
+            div.addEventListener('click', () => {
+                hiddenInput.value = item.path;
+                searchInput.value = item.name;
+                dropdown.classList.remove('show');
+            });
+            dropdown.appendChild(div);
+        });
+    }
+    
+    searchInput.addEventListener('focus', () => {
+        renderDropdown(rulesets);
+        dropdown.classList.add('show');
+    });
+    
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        const filtered = rulesets.filter(item => 
+            item.name.toLowerCase().includes(query)
+        );
+        renderDropdown(filtered);
+        dropdown.classList.add('show');
+    });
+    
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.searchable-dropdown')) {
+            dropdown.classList.remove('show');
+        }
+    });
+    
+    // Initial render
+    if (rulesets.length > 0) {
+        renderDropdown(rulesets);
+    }
+}
+
+// Function to populate form for copying jobs
+function populateFormForCopy(jobData) {
+    document.getElementById('jobName').value = jobData.name;
+    document.getElementById('hashMode').value = jobData.hash_mode;
+    document.getElementById('hashModeSearch').value = `${jobData.hash_mode}`;
+    
+    if (jobData.wordlist) {
+        document.getElementById('wordlist').value = jobData.wordlist;
+        // Find wordlist name from the wordlists array and set search field
+        const wordlistItem = wordlists.find(w => w.path === jobData.wordlist);
+        if (wordlistItem) {
+            document.getElementById('wordlistSearch').value = wordlistItem.name;
+        }
+    }
+    
+    if (jobData.rulesets && jobData.rulesets !== '[]') {
+        try {
+            const rulesetsArray = JSON.parse(jobData.rulesets);
+            // Clear existing rulesets
+            const container = document.getElementById('rulesetContainer');
+            container.innerHTML = '';
+            rulesetCounter = 0;
+            
+            rulesetsArray.forEach((rulesetPath, index) => {
+                if (index === 0) {
+                    // First ruleset - recreate the initial one
+                    const rulesetItem = document.createElement('div');
+                    rulesetItem.className = 'ruleset-item mb-2';
+                    rulesetItem.innerHTML = `
+                        <div class="input-group">
+                            <div class="searchable-dropdown flex-grow-1">
+                                <input type="text" class="form-control" id="rulesetSearch0" 
+                                       placeholder="Search rulesets..." autocomplete="off">
+                                <input type="hidden" name="rulesets" id="ruleset0">
+                                <div class="dropdown-menu w-100" id="rulesetDropdown0">
+                                    <div class="text-center p-2">
+                                        <div class="loading-spinner me-2"></div>
+                                        Loading rulesets...
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-outline-success" id="addRulesetBtn">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    `;
+                    container.appendChild(rulesetItem);
+                    setupRulesetDropdown(0);
+                    setupMultipleRulesets();
+                } else {
+                    // Additional rulesets - trigger add button
+                    document.getElementById('addRulesetBtn').click();
+                }
+                
+                // Set the value
+                document.getElementById(`ruleset${index}`).value = rulesetPath;
+                const rulesetItem = rulesets.find(r => r.path === rulesetPath);
+                if (rulesetItem) {
+                    document.getElementById(`rulesetSearch${index}`).value = rulesetItem.name;
+                }
+            });
+        } catch (e) {
+            console.error('Error parsing rulesets:', e);
+        }
+    }
+    
+    document.getElementById('disablePotfile').checked = jobData.disable_potfile;
+
+    // Use the proper helper function to set hash text
+    setHashText(jobData.hashes_text || '');
+}
+</script>
+
+<style>
+.searchable-dropdown {
+    position: relative;
+}
+
+.searchable-dropdown .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: none;
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    background: white;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.searchable-dropdown .dropdown-menu.show {
+    display: block;
+}
+
+.file-upload-area {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-upload-area:hover {
+    border-color: var(--bs-primary);
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.file-upload-area.dragover {
+    border-color: var(--bs-success);
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+.hash-editor-container {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    max-height: 400px;
+    overflow-y: auto;
+    position: relative;
+    contain: layout style;
+}
+
+.hash-editor {
+    display: flex;
+    background: #f8f9fa;
+    min-height: 200px;
+    position: relative;
+}
+
+.line-numbers {
+    background: #e9ecef;
+    color: #6c757d;
+    padding: 0.5rem 0.75rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    user-select: none;
+    min-width: 3rem;
+    text-align: right;
+    white-space: pre;
+    border-right: 1px solid #dee2e6;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+    word-break: keep-all;
+    overflow-wrap: normal;
+}
+
+.hash-textarea {
+    border: none;
+    border-radius: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    resize: none;
+    outline: none;
+    box-shadow: none;
+    background: white;
+    min-height: 200px;
+    height: auto;
+    word-wrap: break-word;
+    word-break: break-all;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    flex-grow: 1;
+    box-sizing: border-box;
+    padding: 0.5rem 0.75rem;
+    position: relative;
+    z-index: 0;
+    contain: layout style;
+}
+
+.hash-textarea:focus {
+    border: none;
+    box-shadow: none;
+}
+
+[data-bs-theme="dark"] .hash-editor {
+    background: #343a40;
+}
+
+[data-bs-theme="dark"] .line-numbers {
+    background: #495057;
+    color: #adb5bd;
+    border-right-color: #495057;
+}
+
+[data-bs-theme="dark"] .hash-textarea {
+    background: #212529;
+    color: #ffffff;
+    border-color: #495057;
+}
+
+[data-bs-theme="dark"] .hash-editor-container {
+    border-color: #495057;
+}
+</style>
+{{end}}

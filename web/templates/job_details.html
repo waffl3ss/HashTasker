@@ -1,0 +1,714 @@
+{{define "head"}}{{end}}
+
+{{define "job_details-content"}}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/jobs">Jobs</a></li>
+                    <li class="breadcrumb-item active">{{.job.UID}}</li>
+                </ol>
+            </nav>
+            <div>
+                <button class="btn btn-outline-info me-2" onclick="copyJob('{{.job.UID}}')">
+                    <i class="bi bi-files"></i> Copy Job
+                </button>
+                {{if or (eq .job.Status "queued") (eq .job.Status "running")}}
+                <button class="btn btn-outline-warning me-2" onclick="cancelJob('{{.job.UID}}')">
+                    <i class="bi bi-stop-circle"></i> Cancel Job
+                </button>
+                {{end}}
+                <button class="btn btn-outline-danger" onclick="deleteJob('{{.job.UID}}')">
+                    <i class="bi bi-trash"></i> Delete Job
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="job-details-header">
+    <h1 class="mb-2">Job Details - {{.job.Name}} ({{.job.UID}}) - <span id="jobStatus">{{.job.Status}}</span></h1>
+    <p class="mb-0">Created by {{.job.User.Username}} on {{.job.CreatedAt.Format "2006-01-02 15:04:05"}} UTC</p>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-info-circle"></i> Job Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td class="fw-medium">User:</td>
+                        <td>{{.job.User.Username}}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-medium">Wordlist:</td>
+                        <td><code id="wordlistDisplay">{{.job.Wordlist}}</code></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-medium">Ruleset:</td>
+                        <td><code id="rulesetDisplay">{{.job.Rulesets}}</code></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-medium">Hash Type:</td>
+                        <td><span class="badge bg-info">{{.job.HashMode}}</span></td>
+                    </tr>
+                    <tr>
+                        <td class="fw-medium">Elapsed Time:</td>
+                        <td id="elapsedTime">-</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-medium">Time Remaining (est):</td>
+                        <td id="timeRemaining">-</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-pie-chart"></i> Progress Overview</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="pie-chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+                <div class="mt-3">
+                    <span class="badge bg-success fs-6" id="crackedCount">{{.job.CrackedCount}}</span> cracked / 
+                    <span class="badge bg-secondary fs-6">{{.job.TotalHashes}}</span> total
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-server"></i> Worker Progress</h5>
+            </div>
+            <div class="card-body">
+                <div id="crackerProgress">
+                    <div class="text-center">
+                        <div class="loading-spinner me-2"></div>
+                        Loading worker progress...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-key"></i> Recovered Hashes</h5>
+                    <div class="d-flex gap-2">
+                        <input type="text" id="hashSearch" class="form-control form-control-sm" placeholder="Search..." style="width: 200px;">
+                        <button class="btn btn-outline-secondary btn-sm" id="togglePasswords">
+                            <i class="bi bi-eye"></i> Show Passwords
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="cracked-hashes-table">
+                    <!-- Pagination controls at top -->
+                    <div id="hashPaginationTop" class="d-flex justify-content-between align-items-center mb-3" style="display: none !important;">
+                        <div class="pagination-info">
+                            Showing <span id="paginationStartTop">0</span>-<span id="paginationEndTop">0</span> of <span id="paginationTotalTop">0</span> hashes
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0" id="paginationControlsTop">
+                                <!-- Pagination buttons will be inserted here -->
+                            </ul>
+                        </nav>
+                    </div>
+                    
+                    <table class="table table-striped table-hover cracked-hashes-table-layout">
+                        <thead>
+                            <tr>
+                                <th class="hash-column">Hash</th>
+                                <th class="password-column">Password</th>
+                                <th class="recovery-time-column">Recovery Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="crackedHashesBody">
+                            <tr>
+                                <td colspan="3" class="text-center">
+                                    <div class="loading-spinner me-2"></div>
+                                    Loading recovered hashes...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination controls at bottom -->
+                    <div id="hashPagination" class="d-flex justify-content-between align-items-center mt-3" style="display: none !important;">
+                        <div class="pagination-info">
+                            Showing <span id="paginationStart">0</span>-<span id="paginationEnd">0</span> of <span id="paginationTotal">0</span> hashes
+                        </div>
+                        <nav>
+                            <ul class="pagination pagination-sm mb-0" id="paginationControls">
+                                <!-- Pagination buttons will be inserted here -->
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "job_details-scripts"}}
+<script>
+let jobData = null;
+let progressChart = null;
+let showPasswords = false;
+let currentHashPage = 1;
+let hashPageSize = 50;
+let totalHashPages = 1;
+
+let refreshInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadJobDetails();
+    
+    // Start with more frequent updates for active jobs
+    startSmartRefresh();
+    
+    // Search functionality
+    document.getElementById('hashSearch').addEventListener('input', filterCrackedHashes);
+    document.getElementById('togglePasswords').addEventListener('click', togglePasswordVisibility);
+});
+
+function startSmartRefresh() {
+    // Clear any existing interval
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+    
+    // Check job status and adjust refresh rate accordingly
+    const checkAndRefresh = () => {
+        loadJobDetails();
+        
+        // If job data is available, adjust refresh rate based on status
+        if (jobData && jobData.job) {
+            const status = jobData.job.status;
+            
+            if (status === 'running') {
+                // 5 seconds for running jobs
+                const interval = 5000;
+                if (!refreshInterval || refreshInterval._interval !== interval) {
+                    if (refreshInterval) clearInterval(refreshInterval);
+                    refreshInterval = setInterval(checkAndRefresh, interval);
+                    refreshInterval._interval = interval;
+                }
+            } else if (status === 'queued') {
+                // 5 seconds for queued jobs too
+                const interval = 5000;
+                if (!refreshInterval || refreshInterval._interval !== interval) {
+                    if (refreshInterval) clearInterval(refreshInterval);
+                    refreshInterval = setInterval(checkAndRefresh, interval);
+                    refreshInterval._interval = interval;
+                }
+            } else if (status === 'completed' || status === 'failed' || status === 'cancelled' || status === 'exhausted' || status === 'aborted') {
+                // Stop refreshing for finished jobs
+                if (refreshInterval) {
+                    clearInterval(refreshInterval);
+                    refreshInterval = null;
+                }
+            }
+        }
+    };
+    
+    // Start the smart refresh cycle
+    refreshInterval = setInterval(checkAndRefresh, 5000);
+    refreshInterval._interval = 5000;
+}
+
+function loadJobDetails() {
+    const jobUID = window.location.pathname.split('/').pop();
+    
+    fetch(`/api/jobs/${jobUID}`)
+        .then(response => response.json())
+        .then(data => {
+            jobData = data;
+            updateJobInfo();
+            updateCrackerProgress();
+            updateCrackedHashes();
+            updateProgressChart();
+        })
+        .catch(error => {
+            console.error('Error loading job details:', error);
+        });
+}
+
+function updateJobInfo() {
+    const job = jobData.job;
+    
+    document.getElementById('jobStatus').textContent = job.status;
+    document.getElementById('crackedCount').textContent = job.cracked_count;
+    
+    // Update wordlist display to show only filename
+    const wordlistPath = job.wordlist || '';
+    const wordlistFilename = wordlistPath.split('/').pop() || wordlistPath;
+    document.getElementById('wordlistDisplay').textContent = wordlistFilename;
+    
+    // Update ruleset display - parse JSON array and show filenames
+    let rulesetDisplay = 'None';
+    if (job.rulesets && job.rulesets !== '[]' && job.rulesets !== '') {
+        try {
+            const rulesets = JSON.parse(job.rulesets);
+            if (rulesets.length > 0) {
+                const rulesetFilenames = rulesets.map(ruleset => ruleset.split('/').pop() || ruleset);
+                rulesetDisplay = rulesetFilenames.join(', ');
+            }
+        } catch (e) {
+            // If not valid JSON, treat as single ruleset
+            rulesetDisplay = job.rulesets.split('/').pop() || job.rulesets;
+        }
+    }
+    document.getElementById('rulesetDisplay').textContent = rulesetDisplay;
+    
+    // Calculate elapsed time
+    const createdAt = new Date(job.created_at);
+    let elapsedMs;
+    
+    // If job is finished, calculate elapsed time from creation to finish time
+    if (job.finished_at && (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled')) {
+        const finishedAt = new Date(job.finished_at);
+        elapsedMs = finishedAt - createdAt;
+    } else {
+        // Job is still running or queued, calculate elapsed time from creation to now
+        const now = new Date();
+        elapsedMs = now - createdAt;
+    }
+    
+    document.getElementById('elapsedTime').textContent = formatDuration(elapsedMs / 1000);
+    
+    // Calculate average time remaining from all workers
+    let avgTimeRemaining = 0;
+    let activeWorkers = 0;
+    
+    if (jobData.progress && jobData.progress.length > 0) {
+        let totalTimeRemaining = 0;
+        jobData.progress.forEach(worker => {
+            if (worker.status === 'running' && worker.time_remaining > 0) {
+                totalTimeRemaining += worker.time_remaining;
+                activeWorkers++;
+            }
+        });
+        
+        if (activeWorkers > 0) {
+            avgTimeRemaining = Math.round(totalTimeRemaining / activeWorkers);
+            document.getElementById('timeRemaining').textContent = formatDuration(avgTimeRemaining);
+        } else if (job.status === 'completed') {
+            document.getElementById('timeRemaining').textContent = 'Complete';
+        } else if (job.status === 'failed') {
+            document.getElementById('timeRemaining').textContent = 'Failed';
+        } else if (job.status === 'cancelled') {
+            document.getElementById('timeRemaining').textContent = 'Cancelled';
+        } else if (job.status === 'queued') {
+            document.getElementById('timeRemaining').textContent = 'Queued';
+        } else {
+            document.getElementById('timeRemaining').textContent = 'Calculating...';
+        }
+    } else if (job.status === 'completed') {
+        document.getElementById('timeRemaining').textContent = 'Complete';
+    } else if (job.status === 'failed') {
+        document.getElementById('timeRemaining').textContent = 'Failed';
+    } else if (job.status === 'cancelled') {
+        document.getElementById('timeRemaining').textContent = 'Cancelled';
+    } else if (job.status === 'queued') {
+        document.getElementById('timeRemaining').textContent = 'Queued';
+    } else {
+        document.getElementById('timeRemaining').textContent = 'No active workers';
+    }
+}
+
+function updateCrackerProgress() {
+    const progressDiv = document.getElementById('crackerProgress');
+    
+    if (!jobData.progress || jobData.progress.length === 0) {
+        progressDiv.innerHTML = '<div class="text-muted text-center">No worker progress available</div>';
+        return;
+    }
+    
+    progressDiv.innerHTML = '';
+    
+    jobData.progress.forEach(progress => {
+        // Special handling for overloaded workers
+        let statusDisplay = progress.status;
+        let progressDetails = '';
+        
+        if (progress.status === 'overloaded') {
+            statusDisplay = 'Worker Overloaded';
+            progressDetails = `
+                <div class="alert alert-warning mb-2">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Worker Overloaded:</strong> This worker has too many jobs running and could not start this task. 
+                    The job will retry automatically when worker capacity becomes available.
+                </div>
+            `;
+        } else {
+            progressDetails = `
+                <div class="progress mb-2">
+                    <div class="progress-bar progress-bar-striped ${progress.status === 'running' ? 'progress-bar-animated' : ''}" 
+                         style="width: ${progress.progress || 0}%">${(progress.progress || 0).toFixed(1)}%</div>
+                </div>
+                <div class="row text-muted small">
+                    <div class="col-md-3">Keyspace: ${(progress.keyspace_size || 0).toLocaleString()}</div>
+                    <div class="col-md-3">Elapsed: ${formatDuration(progress.time_elapsed || 0)}</div>
+                    <div class="col-md-3">Remaining: ${formatDuration(progress.time_remaining || 0)}</div>
+                    <div class="col-md-3">
+                        ${progress.created_at ? 'Started: ' + formatDateTime(new Date(progress.created_at)) : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        const progressHtml = `
+            <div class="worker-progress">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="fw-medium">${progress.worker_name || 'Worker'}</span>
+                    <span class="badge bg-${getProgressStatusColor(progress.status)}">${statusDisplay}</span>
+                </div>
+                ${progressDetails}
+            </div>
+            <hr>
+        `;
+        progressDiv.innerHTML += progressHtml;
+    });
+}
+
+function updateCrackedHashes() {
+    loadCrackedHashes(currentHashPage);
+}
+
+function loadCrackedHashes(page) {
+    const jobUID = window.location.pathname.split('/').pop();
+    const tbody = document.getElementById('crackedHashesBody');
+    const searchTerm = document.getElementById('hashSearch').value.toLowerCase();
+    
+    // Show loading
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center"><div class="loading-spinner me-2"></div>Loading hashes...</td></tr>';
+    
+    let url = `/api/jobs/${jobUID}/cracked?page=${page}&page_size=${hashPageSize}`;
+    if (searchTerm) {
+        url += `&search=${encodeURIComponent(searchTerm)}`;
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.hashes || data.hashes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No hashes cracked yet</td></tr>';
+                document.getElementById('hashPagination').style.display = 'none';
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            
+            data.hashes.forEach(crackedHash => {
+                let displayHash;
+                if (showPasswords) {
+                    // When shown: limit to column width (~80 chars to fit nicely)
+                    if (crackedHash.hash.length > 80) {
+                        displayHash = crackedHash.hash.substring(0, 77) + '...';
+                    } else {
+                        displayHash = crackedHash.hash;
+                    }
+                } else {
+                    // When hidden: show first 25% but limit to ~50 chars max for column
+                    const showLength = Math.min(50, Math.max(8, Math.floor(crackedHash.hash.length * 0.25)));
+                    if (showLength < crackedHash.hash.length) {
+                        displayHash = crackedHash.hash.substring(0, showLength) + '...';
+                    } else {
+                        displayHash = crackedHash.hash;
+                    }
+                }
+
+                let passwordDisplay;
+                if (showPasswords) {
+                    // Limit password display to ~60 chars to fit column
+                    if (crackedHash.plaintext.length > 60) {
+                        passwordDisplay = crackedHash.plaintext.substring(0, 57) + '...';
+                    } else {
+                        passwordDisplay = crackedHash.plaintext;
+                    }
+                } else {
+                    passwordDisplay = '[HIDDEN]';
+                }
+
+                const row = `
+                    <tr>
+                        <td class="hash-display hash-column">${displayHash}</td>
+                        <td class="password-display password-column">${passwordDisplay}</td>
+                        <td class="small recovery-time-column">${formatDuration(crackedHash.recovery_time)}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+            
+            // Update pagination
+            updateHashPagination(data);
+        })
+        .catch(error => {
+            console.error('Error loading cracked hashes:', error);
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Error loading hashes</td></tr>';
+        });
+}
+
+function updateHashPagination(data) {
+    const paginationDiv = document.getElementById('hashPagination');
+    const paginationDivTop = document.getElementById('hashPaginationTop');
+    const paginationControls = document.getElementById('paginationControls');
+    const paginationControlsTop = document.getElementById('paginationControlsTop');
+    
+    if (data.total_pages <= 1) {
+        paginationDiv.style.display = 'none';
+        paginationDivTop.style.display = 'none';
+        return;
+    }
+    
+    // Update pagination info
+    const start = (data.current_page - 1) * data.page_size + 1;
+    const end = Math.min(data.current_page * data.page_size, data.total);
+    
+    // Update both top and bottom pagination info
+    document.getElementById('paginationStart').textContent = start;
+    document.getElementById('paginationEnd').textContent = end;
+    document.getElementById('paginationTotal').textContent = data.total;
+    document.getElementById('paginationStartTop').textContent = start;
+    document.getElementById('paginationEndTop').textContent = end;
+    document.getElementById('paginationTotalTop').textContent = data.total;
+    
+    // Update current page tracking
+    currentHashPage = data.current_page;
+    totalHashPages = data.total_pages;
+    
+    // Build pagination controls HTML
+    let paginationHTML = '';
+    
+    // Previous button
+    if (data.current_page > 1) {
+        paginationHTML += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="changePage(${data.current_page - 1})">Previous</a>
+            </li>
+        `;
+    }
+    
+    // Page numbers
+    const startPage = Math.max(1, data.current_page - 2);
+    const endPage = Math.min(data.total_pages, data.current_page + 2);
+    
+    if (startPage > 1) {
+        paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="changePage(1)">1</a></li>`;
+        if (startPage > 2) {
+            paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const activeClass = i === data.current_page ? 'active' : '';
+        paginationHTML += `
+            <li class="page-item ${activeClass}">
+                <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+            </li>
+        `;
+    }
+    
+    if (endPage < data.total_pages) {
+        if (endPage < data.total_pages - 1) {
+            paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+        paginationHTML += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="changePage(${data.total_pages})">${data.total_pages}</a>
+            </li>
+        `;
+    }
+    
+    // Next button
+    if (data.current_page < data.total_pages) {
+        paginationHTML += `
+            <li class="page-item">
+                <a class="page-link" href="#" onclick="changePage(${data.current_page + 1})">Next</a>
+            </li>
+        `;
+    }
+    
+    // Apply to both top and bottom
+    paginationControls.innerHTML = paginationHTML;
+    paginationControlsTop.innerHTML = paginationHTML;
+    
+    paginationDiv.style.display = 'flex';
+    paginationDivTop.style.display = 'flex';
+}
+
+function changePage(page) {
+    if (page >= 1 && page <= totalHashPages && page !== currentHashPage) {
+        loadCrackedHashes(page);
+    }
+}
+
+function updateProgressChart() {
+    const ctx = document.getElementById('progressChart').getContext('2d');
+    
+    if (progressChart) {
+        progressChart.destroy();
+    }
+    
+    const crackedCount = jobData.job.cracked_count;
+    const totalCount = jobData.job.total_hashes;
+    const uncracked = totalCount - crackedCount;
+    
+    // Get theme-aware colors
+    const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+    const successColor = '#198754';
+    const uncrackedColor = isDark ? '#495057' : '#dee2e6';
+    const textColor = isDark ? '#ffffff' : '#000000';
+    
+    progressChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Cracked', 'Uncracked'],
+            datasets: [{
+                data: [crackedCount, uncracked],
+                backgroundColor: [successColor, uncrackedColor],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        color: textColor
+                    }
+                }
+            }
+        }
+    });
+}
+
+function getProgressStatusColor(status) {
+    const colors = {
+        'queued': 'secondary',
+        'running': 'primary',
+        'completed': 'success',
+        'failed': 'danger',
+        'overloaded': 'warning',
+        'exhausted': 'info',
+        'aborted': 'dark'
+    };
+    return colors[status] || 'secondary';
+}
+
+function togglePasswordVisibility() {
+    showPasswords = !showPasswords;
+    const button = document.getElementById('togglePasswords');
+    
+    if (showPasswords) {
+        button.innerHTML = '<i class="bi bi-eye-slash"></i> Hide Passwords';
+    } else {
+        button.innerHTML = '<i class="bi bi-eye"></i> Show Passwords';
+    }
+    
+    updateCrackedHashes();
+}
+
+function filterCrackedHashes() {
+    // Reset to first page when searching
+    currentHashPage = 1;
+    loadCrackedHashes(currentHashPage);
+}
+
+function copyJob(uid) {
+    fetch(`/api/jobs/${uid}/copy`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.name) {
+                // Store the job data in sessionStorage to pass to create job page
+                sessionStorage.setItem('copyJobData', JSON.stringify(data));
+                window.location.href = '/jobs/create';
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error copying job:', error);
+            alert('Error copying job');
+        });
+}
+
+function cancelJob(uid) {
+    if (!confirm('Are you sure you want to cancel this job?')) {
+        return;
+    }
+    
+    fetch(`/api/jobs/${uid}/cancel`, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                loadJobDetails(); // Refresh the page
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error cancelling job:', error);
+            alert('Error cancelling job');
+        });
+}
+
+function deleteJob(uid) {
+    if (!confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+        return;
+    }
+    
+    fetch(`/api/jobs/${uid}`, { method: 'DELETE' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.message) {
+                window.location.href = '/jobs'; // Redirect to jobs list
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting job:', error);
+            alert('Error deleting job');
+        });
+}
+
+function formatDuration(seconds) {
+    if (seconds < 60) {
+        return Math.round(seconds) + 's';
+    } else if (seconds < 3600) {
+        return Math.round(seconds / 60) + 'm';
+    } else if (seconds < 86400) {
+        return Math.round(seconds / 3600) + 'h';
+    } else {
+        return Math.round(seconds / 86400) + 'd';
+    }
+}
+
+function formatDateTime(date) {
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+}
+</script>
+{{end}}
