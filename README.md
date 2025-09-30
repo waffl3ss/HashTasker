@@ -13,6 +13,14 @@ HashTasker offers several key advantages over existing solutions like Hashtopoli
 - **Real-time Monitoring**: Live progress tracking, performance metrics, and worker status monitoring
 - **Flexible Worker Management**: Automatic worker discovery and load balancing with detailed worker statistics
 
+## v1.0.6
+
+- Updated to run a queue system if the worker is overloaded (aka too many jobs). It will wait for a job to complete, then automatically retry the chunk on that worker.
+- Added line numbers to the job creation page for the pasted hashes so its visable when a hash is accidentally broken up by new lines
+- Fixed some incorrect cracked hash reporting, where it was showing some errors instead of the hashes themselves.
+- Fixed whitespace breaking uploaded hashes and causing seperator issues or causing it not to attempt some of the hashes.
+- Added a troubleshooting and changelog page. These can be modified without stopping the server, as they are read in real time. I havnt populated these yet but getting there.
+
 ## Features
 
 ### Core Functionality
@@ -51,15 +59,11 @@ HashTasker offers several key advantages over existing solutions like Hashtopoli
 ```bash
 git clone https://github.com/waffl3ss/HashTasker.git
 cd HashTasker
-go mod init hashtasker-go
-go mod tidy
-go build -o hashtasker-server server.go
-go build -o hashtasker-worker worker.go
+bash build.sh
 ```
 
 ### Releases
-Pre-compiled binaries are available in the [Releases](https://github.com/waffl3ss/HashTasker/releases) section.
-
+Ive removed the pre-built releases for now, but i have included a build script...
 ## Required Files
 
 ### Server Requirements
@@ -67,6 +71,8 @@ The server needs the following files:
 - `hashtasker-server` (binary)
 - `config.yaml` (configuration file)
 - `hashmodes.txt` (hashcat hash mode reference)
+- `changelog.md` (Displays the contents of this file in the changelog endpoint, it loads the file in real time so you can edit without shutting down the server)
+- `troubleshooting.md` (A troubleshooting page that can be modified in real time without shutting down the server)
 
 ### Worker Requirements  
 Each worker needs:
@@ -157,6 +163,9 @@ On each worker node:
 ```
 
 Workers will automatically register with the server and begin polling for jobs.
+
+## Upgrading
+To upgrade and not lose things, simply replace the binary file, but leave the config/db/etc. It will automatically take care of migrations needed and continue to use the previous data. 
 
 ## Default Credentials
 
