@@ -56,11 +56,13 @@ go mod tidy
 
 Build the server:
 ```bash
+cd Server
 go build -o hashtasker-server
 ```
 
 Build the worker:
 ```bash
+cd Worker
 go build -o hashtasker-worker worker.go
 ```
 
