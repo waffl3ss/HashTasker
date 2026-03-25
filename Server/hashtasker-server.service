@@ -1,0 +1,14 @@
+[Unit]
+Description=HashTasker Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/HashTaskerGo
+ExecStart=/opt/HashTaskerGo/hashtasker-server
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
