@@ -1,0 +1,14 @@
+[Unit]
+Description=HashTasker Worker
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/HashTaskerGo
+ExecStart=/opt/HashTaskerGo/hashtasker-worker -config worker.json
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

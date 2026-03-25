@@ -1,0 +1,8 @@
+{
+	"server_url": "http://localhost:8080",
+	"hostname": "worker-01",
+	"checkin_interval": "30s",
+	"hashcat_path": "/usr/bin/hashcat",
+	"rulesets_path": "/opt/rules",
+	"temp_path": "/tmp/hashtasker"
+}

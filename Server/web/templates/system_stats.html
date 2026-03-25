@@ -1,0 +1,577 @@
+{{define "head"}}{{end}}
+
+{{define "system_stats-content"}}
+<div class="row">
+    <div class="col-12">
+        <h1><i class="bi bi-cpu"></i> System Statistics</h1>
+        <hr>
+    </div>
+</div>
+
+<div class="row" id="systemOverview">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body text-center">
+                <h3 id="totalWorkers" class="mb-0">-</h3>
+                <p class="mb-0">Total Workers</p>
+                <small id="onlineWorkers">- online</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-gradient-success text-white">
+            <div class="card-body text-center">
+                <h3 id="totalGPUs" class="mb-0">-</h3>
+                <p class="mb-0">Total GPUs</p>
+                <small id="activeGPUs">- active</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-gradient-info text-white">
+            <div class="card-body text-center">
+                <h3 id="totalHashcatProcs" class="mb-0">-</h3>
+                <p class="mb-0">Hashcat Processes</p>
+                <small>across all workers</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-diagram-3"></i> System Details</h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshStats()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="autoRefresh" checked>
+                            <label class="form-check-label" for="autoRefresh">Auto-refresh</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="workersContainer">
+                    <div class="text-center">
+                        <div class="loading-spinner me-2"></div>
+                        Loading system statistics...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "system_stats-scripts"}}
+<script>
+let autoRefreshInterval;
+let lastUpdateTime = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadSystemStats();
+    setupAutoRefresh();
+});
+
+function setupAutoRefresh() {
+    const checkbox = document.getElementById('autoRefresh');
+    
+    // Start auto-refresh by default
+    startAutoRefresh();
+    
+    checkbox.addEventListener('change', function() {
+        if (this.checked) {
+            startAutoRefresh();
+        } else {
+            stopAutoRefresh();
+        }
+    });
+}
+
+function startAutoRefresh() {
+    // Refresh every 15 seconds
+    autoRefreshInterval = setInterval(() => {
+        loadSystemStats();
+    }, 15000);
+}
+
+function stopAutoRefresh() {
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+    }
+}
+
+function refreshStats() {
+    loadSystemStats();
+}
+
+function loadSystemStats() {
+    fetch('/api/system/stats')
+        .then(response => response.json())
+        .then(data => {
+            updateOverviewStats(data);
+            displayAllSystems(data);
+            lastUpdateTime = new Date();
+        })
+        .catch(error => {
+            console.error('Error loading system stats:', error);
+            document.getElementById('workersContainer').innerHTML = 
+                '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Error loading system statistics</div>';
+        });
+}
+
+function updateOverviewStats(data) {
+    const workers = data.workers || [];
+    const server = data.server;
+    const totalWorkers = workers.length;
+    const onlineWorkers = workers.filter(w => w.is_online).length;
+    const totalSystems = totalWorkers + (server ? 1 : 0);
+    
+    let totalGPUs = 0;
+    let activeGPUs = 0;
+    let totalHashcatProcs = 0;
+    
+    workers.forEach(worker => {
+        if (worker.gpus) {
+            totalGPUs += worker.gpus.length;
+            activeGPUs += worker.gpus.filter(gpu => gpu.usage > 10).length;
+        }
+        totalHashcatProcs += worker.hashcat_procs || 0;
+    });
+    
+    document.getElementById('totalWorkers').textContent = totalWorkers;
+    document.getElementById('onlineWorkers').textContent = `${onlineWorkers} workers + ${server ? '1 server' : '0 servers'} online`;
+    document.getElementById('totalGPUs').textContent = totalGPUs;
+    document.getElementById('activeGPUs').textContent = `${activeGPUs} active`;
+    document.getElementById('totalHashcatProcs').textContent = totalHashcatProcs;
+}
+
+function displayAllSystems(data) {
+    const container = document.getElementById('workersContainer');
+    const workers = data.workers || [];
+    const server = data.server;
+    
+    if (!server && (!workers || workers.length === 0)) {
+        container.innerHTML = '<div class="text-center text-muted">No systems found</div>';
+        return;
+    }
+    
+    let html = '';
+    
+    // Server Details Section
+    if (server) {
+        html += `
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4><i class="bi bi-hdd-rack text-primary"></i> Server Details</h4>
+                    <hr>
+                </div>
+            </div>
+            <div class="row mb-5">
+        `;
+        html += createSystemCardHTML(server, true);
+        html += '</div>';
+    }
+    
+    // Worker Details Section
+    if (workers && workers.length > 0) {
+        html += `
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h4><i class="bi bi-server text-success"></i> Worker Details</h4>
+                    <hr>
+                </div>
+            </div>
+            <div class="row">
+        `;
+        workers.forEach(worker => {
+            html += createSystemCardHTML(worker, false);
+        });
+        html += '</div>';
+    } else if (!server) {
+        html += `
+            <div class="row">
+                <div class="col-12">
+                    <h4><i class="bi bi-server text-success"></i> Worker Details</h4>
+                    <hr>
+                    <div class="text-center text-muted">No workers found</div>
+                </div>
+            </div>
+        `;
+    }
+    
+    container.innerHTML = html;
+}
+
+function createSystemCardHTML(system, isServer) {
+    const lastCheckin = new Date(system.last_checkin);
+    const now = new Date();
+    const diffSeconds = (now - lastCheckin) / 1000;
+    const isOnline = isServer || diffSeconds <= 60;
+    
+    const statusBadge = isOnline ? 
+        '<span class="badge bg-success">Online</span>' : 
+        '<span class="badge bg-danger">Offline</span>';
+    
+    const systemType = isServer ? 'Server' : 'Worker';
+    const memoryUsagePercent = system.memory_total > 0 ? 
+        (system.memory_used / system.memory_total * 100).toFixed(1) : 0;
+    
+    // Both server and workers get full width
+    const colClass = 'col-12';
+    
+    return `
+        <div class="${colClass} mb-4">
+            <div class="card worker-card h-100">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="bi bi-${isServer ? 'hdd-rack' : 'server'}"></i> ${system.hostname}
+                            <small class="text-muted ms-2">(${systemType})</small>
+                        </h5>
+                        ${statusBadge}
+                    </div>
+                </div>
+                <div class="card-body">
+                    ${isServer ? `
+                        <div class="row">
+                            <div class="col-12">
+                                <h6><i class="bi bi-info-circle"></i> System Information</h6>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="fw-medium" style="width: 150px;">CPU Usage:</td>
+                                        <td>
+                                            <div class="progress position-relative" style="height: 20px;">
+                                                <div class="progress-bar ${getCPUProgressColor(system.cpu_usage)}" 
+                                                     style="width: ${system.cpu_usage}%;"></div>
+                                                <span class="position-absolute w-100 text-center" style="line-height: 20px; font-weight: 500;" class="progress-text">${system.cpu_usage.toFixed(1)}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium">Memory:</td>
+                                        <td>
+                                            <div class="progress position-relative" style="height: 20px;">
+                                                <div class="progress-bar ${getMemoryProgressColor(memoryUsagePercent)}" 
+                                                     style="width: ${memoryUsagePercent}%;"></div>
+                                                <span class="position-absolute w-100 text-center" style="line-height: 20px; font-weight: 500;" class="progress-text">${memoryUsagePercent}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    ${system.disk_used ? `<tr>
+                                        <td class="fw-medium">Disk Usage:</td>
+                                        <td>
+                                            <div class="progress position-relative" style="height: 20px;">
+                                                <div class="progress-bar ${getDiskProgressColor((system.disk_used / system.disk_total) * 100)}" 
+                                                     style="width: ${(system.disk_used / system.disk_total) * 100}%;"></div>
+                                                <span class="position-absolute w-100 text-center" style="line-height: 20px; font-weight: 500;" class="progress-text">${((system.disk_used / system.disk_total) * 100).toFixed(1)}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>` : ''}
+                                    ${system.uptime ? `<tr>
+                                        <td class="fw-medium">Uptime:</td>
+                                        <td><small>${formatUptime(system.uptime)}</small></td>
+                                    </tr>` : ''}
+                                    <tr>
+                                        <td class="fw-medium">Last Checkin:</td>
+                                        <td>
+                                            <small class="text-muted">
+                                                ${formatDateTime(lastCheckin)}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="row">
+                            <div class="col-12">
+                                <h6><i class="bi bi-info-circle"></i> System Information</h6>
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <td class="fw-medium" style="width: 150px;">CPU Usage:</td>
+                                        <td>
+                                            <div class="progress position-relative" style="height: 20px;">
+                                                <div class="progress-bar ${getCPUProgressColor(system.cpu_usage)}" 
+                                                     style="width: ${system.cpu_usage}%;"></div>
+                                                <span class="position-absolute w-100 text-center" style="line-height: 20px; font-weight: 500;" class="progress-text">${system.cpu_usage.toFixed(1)}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="fw-medium">Memory:</td>
+                                        <td>
+                                            <div class="progress position-relative" style="height: 20px;">
+                                                <div class="progress-bar ${getMemoryProgressColor(memoryUsagePercent)}" 
+                                                     style="width: ${memoryUsagePercent}%;"></div>
+                                                <span class="position-absolute w-100 text-center" style="line-height: 20px; font-weight: 500;" class="progress-text">${memoryUsagePercent}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    ${system.disk_usage ? `<tr>
+                                        <td class="fw-medium">Disk Usage:</td>
+                                        <td>
+                                            <div class="progress position-relative" style="height: 20px;">
+                                                <div class="progress-bar ${getDiskProgressColor(system.disk_usage)}" 
+                                                     style="width: ${system.disk_usage}%;"></div>
+                                                <span class="position-absolute w-100 text-center" style="line-height: 20px; font-weight: 500;" class="progress-text">${system.disk_usage.toFixed(1)}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>` : ''}
+                                    ${system.hashcat_procs !== undefined ? `<tr>
+                                        <td class="fw-medium">Hashcat Processes:</td>
+                                        <td><span class="badge bg-warning">${system.hashcat_procs || 0}</span></td>
+                                    </tr>` : ''}
+                                    ${system.uptime ? `<tr>
+                                        <td class="fw-medium">Uptime:</td>
+                                        <td><small>${formatUptime(system.uptime)}</small></td>
+                                    </tr>` : ''}
+                                    <tr>
+                                        <td class="fw-medium">Last Checkin:</td>
+                                        <td>
+                                            <small class="text-muted">
+                                                ${formatDateTime(lastCheckin)}
+                                            </small>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        ${system.gpus && system.gpus.length > 0 ? `
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <h6><i class="bi bi-gpu-card"></i> GPU Information</h6>
+                                <div class="gpu-grid-row">${createGPUCards(system.gpus)}</div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+
+function formatUptime(seconds) {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${days}d ${hours}h ${minutes}m`;
+}
+
+function createWorkerCard(worker) {
+    const card = document.createElement('div');
+    card.className = 'card worker-card mb-4';
+    
+    const lastCheckin = new Date(worker.last_checkin);
+    const now = new Date();
+    const diffSeconds = (now - lastCheckin) / 1000;
+    const isOnline = diffSeconds <= 60;
+    
+    const statusBadge = isOnline ? 
+        '<span class="badge bg-success">Online</span>' : 
+        '<span class="badge bg-danger">Offline</span>';
+    
+    const memoryUsagePercent = worker.memory_total > 0 ? 
+        (worker.memory_used / worker.memory_total * 100).toFixed(1) : 0;
+    
+    card.innerHTML = `
+        <div class="card-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-server"></i> ${worker.hostname}
+                </h5>
+                ${statusBadge}
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6><i class="bi bi-info-circle"></i> System Information</h6>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td class="fw-medium">CPU Usage:</td>
+                            <td>
+                                <div class="progress position-relative" style="height: 20px;">
+                                    <div class="progress-bar ${getCPUProgressColor(worker.cpu_usage)}" 
+                                         style="width: ${worker.cpu_usage}%;"></div>
+                                    <span class="position-absolute w-100 text-center" style="line-height: 20px; font-weight: 500;" class="progress-text">${worker.cpu_usage.toFixed(1)}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-medium">Memory:</td>
+                            <td>
+                                <div class="progress position-relative" style="height: 20px;">
+                                    <div class="progress-bar ${getMemoryProgressColor(memoryUsagePercent)}" 
+                                         style="width: ${memoryUsagePercent}%;"></div>
+                                    <span class="position-absolute w-100 text-center" style="line-height: 20px; font-weight: 500;" class="progress-text">${memoryUsagePercent}%</span>
+                                </div>
+                                <small class="text-muted">
+                                    ${formatBytes(worker.memory_used)} / ${formatBytes(worker.memory_total)}
+                                </small>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-medium">Disk Usage:</td>
+                            <td>
+                                <div class="progress position-relative" style="height: 20px;">
+                                    <div class="progress-bar ${getDiskProgressColor(worker.disk_usage)}" 
+                                         style="width: ${worker.disk_usage}%;"></div>
+                                    <span class="position-absolute w-100 text-center" style="line-height: 20px; font-weight: 500;" class="progress-text">${worker.disk_usage.toFixed(1)}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="fw-medium">Hashcat Processes:</td>
+                            <td><span class="badge bg-warning">${worker.hashcat_procs || 0}</span></td>
+                        </tr>
+                        <tr>
+                            <td class="fw-medium">Last Checkin:</td>
+                            <td>
+                                <small class="${isOnline ? 'text-success' : 'text-danger'}">
+                                    ${formatDateTime(lastCheckin)}
+                                </small>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6><i class="bi bi-gpu-card"></i> GPU Information</h6>
+                    <div class="gpu-grid">
+                        ${createGPUCards(worker.gpus)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function createGPUCards(gpus) {
+    if (!gpus || gpus.length === 0) {
+        return '<div class="text-muted">No GPU information available</div>';
+    }
+    
+    return gpus.map(gpu => `
+        <div class="gpu-card mb-2">
+            <div class="d-flex justify-content-between mb-2">
+                <h6 class="mb-0">GPU ${gpu.index}</h6>
+                <span class="badge bg-light text-dark">${gpu.usage.toFixed(1)}%</span>
+            </div>
+            <div class="progress mb-2" style="height: 8px;">
+                <div class="progress-bar ${getGPUProgressColor(gpu.usage)}" 
+                     style="width: ${gpu.usage}%"></div>
+            </div>
+            <small class="d-block">${gpu.name || 'Unknown GPU'}</small>
+            <small class="d-block">Memory: ${formatBytes(gpu.mem_used)} / ${formatBytes(gpu.mem_total)}</small>
+            ${gpu.temperature ? `<small class="d-block">Temp: ${gpu.temperature}°C</small>` : ''}
+        </div>
+    `).join('');
+}
+
+function getCPUProgressColor(usage) {
+    if (usage > 80) return 'bg-danger';
+    if (usage > 60) return 'bg-warning';
+    return 'bg-success';
+}
+
+function getMemoryProgressColor(usage) {
+    if (usage > 90) return 'bg-danger';
+    if (usage > 70) return 'bg-warning';
+    return 'bg-info';
+}
+
+function getDiskProgressColor(usage) {
+    if (usage > 90) return 'bg-danger';
+    if (usage > 75) return 'bg-warning';
+    return 'bg-primary';
+}
+
+function getGPUProgressColor(usage) {
+    if (usage > 80) return 'bg-success';
+    if (usage > 50) return 'bg-info';
+    if (usage > 20) return 'bg-warning';
+    return 'bg-secondary';
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+function formatDateTime(date) {
+    return date.toLocaleDateString('en-US', { timeZone: 'UTC' }) + ' ' + 
+           date.toLocaleTimeString('en-US', { timeZone: 'UTC', hour12: false }) + ' UTC';
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    stopAutoRefresh();
+});
+</script>
+
+<style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #198754 0%, #146c43 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #0dcaf0 0%, #087990 100%);
+}
+
+.worker-card {
+    transition: all 0.2s ease;
+}
+
+.worker-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.gpu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+}
+
+.gpu-grid-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.gpu-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+    .gpu-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .gpu-grid-row {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{{end}}

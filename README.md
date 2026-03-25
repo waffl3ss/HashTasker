@@ -1,6 +1,6 @@
 # HashTasker
 
-HashTasker is a high-performance distributed hash cracking system built in Go. It provides a web-based management interface for coordinating hashcat jobs across multiple worker nodes, enabling efficient password recovery and hash analysis at scale. I made this as I wanted to have ldap authentication for my team, as well as multiple jobs at once instead of one job at a time. I'm well aware that this will slow down jobs, but in timed engagements, theres no room to wait for other jobs to finish.
+HashTasker is a high-performance distributed hash cracking system built in Go. It provides a web-based management interface for coordinating hashcat jobs across multiple worker nodes, enabling efficient password recovery and hash analysis at scale.
 
 ## Advantages Over Similar Tools
 
@@ -12,14 +12,6 @@ HashTasker offers several key advantages over existing solutions like Hashtopoli
 - **Lightweight Architecture**: Single binary deployment with minimal dependencies and resource overhead
 - **Real-time Monitoring**: Live progress tracking, performance metrics, and worker status monitoring
 - **Flexible Worker Management**: Automatic worker discovery and load balancing with detailed worker statistics
-
-## v1.0.6
-
-- Updated to run a queue system if the worker is overloaded (aka too many jobs). It will wait for a job to complete, then automatically retry the chunk on that worker.
-- Added line numbers to the job creation page for the pasted hashes so its visable when a hash is accidentally broken up by new lines
-- Fixed some incorrect cracked hash reporting, where it was showing some errors instead of the hashes themselves.
-- Fixed whitespace breaking uploaded hashes and causing seperator issues or causing it not to attempt some of the hashes.
-- Added a troubleshooting and changelog page. These can be modified without stopping the server, as they are read in real time. I havnt populated these yet but getting there.
 
 ## Features
 
@@ -44,26 +36,34 @@ HashTasker offers several key advantages over existing solutions like Hashtopoli
 - **Role-based Access**: Administrative controls for user management
 
 ### API
-- **Worker API**: RESTful endpoints for worker communication 
+- **Worker API**: RESTful endpoints for worker communication (no authentication required)
 - **Management API**: Authenticated endpoints for web interface operations
 - **Real-time Updates**: WebSocket-based live updates for job progress
 
-## Notes
-- You can run the worker on however many systems you want, when it calls back to the server, it will register as ready to use for jobs.
-- The binary is embed with the web templates and files, so no need to include the web directory on the server
-- its fairly straight forward. feel free to reach out if you have issues.
-
 ## Building from Source
 
-### Build Instructions (go 1.19+ required)
+### Prerequisites
+- Go 1.19 or later
+- Git
+
+### Build Instructions
 ```bash
 git clone https://github.com/waffl3ss/HashTasker.git
 cd HashTasker
-bash build.sh
+go mod init hashtasker-go
+go mod tidy
 ```
 
-### Releases
-Ive removed the pre-built releases for now, but i have included a build script...
+Build the server:
+```bash
+go build -o hashtasker-server
+```
+
+Build the worker:
+```bash
+go build -o hashtasker-worker worker.go
+```
+
 ## Required Files
 
 ### Server Requirements
@@ -71,8 +71,7 @@ The server needs the following files:
 - `hashtasker-server` (binary)
 - `config.yaml` (configuration file)
 - `hashmodes.txt` (hashcat hash mode reference)
-- `changelog.md` (Displays the contents of this file in the changelog endpoint, it loads the file in real time so you can edit without shutting down the server)
-- `troubleshooting.md` (A troubleshooting page that can be modified in real time without shutting down the server)
+- `web/` directory (templates and static files)
 
 ### Worker Requirements  
 Each worker needs:
@@ -98,19 +97,51 @@ openssl rand -hex 32
 Update the `session_key` field in `config.yaml` with this value.
 
 **2. Admin Password**
-Change the default admin password in the `config.yaml`. This will be automatically hashed on first startup.
+Change the default admin password in `admin.password`. This will be automatically hashed on first startup.
 
 **3. Directory Paths**
 Configure the following directories that must be accessible to the server:
 
-- **Wordlist Directory** (`wordlists_path`): Directory containing wordlist files
-- **Ruleset Directory** (`rulesets_path`): Directory containing hashcat rule files 
+- **Wordlist Directory** (`wordlists_path`): Directory containing wordlist files (.txt format)
+- **Ruleset Directory** (`rulesets_path`): Directory containing hashcat rule files (.rule format)
 - **Upload Directory** (`upload_path`): Directory for temporary file uploads
-- **Static Files** (`static_path`): Path to web static files (leave default unless you change things, binary build has these embeded)
-- **Templates** (`template_path`): Path to web templates (leave default unless you change things, binary build has these embeded)
+- **Static Files** (`static_path`): Path to web static files
+- **Templates** (`template_path`): Path to web templates
 
 **4. LDAP Configuration (Optional)**
-If using LDAP authentication, configure the `config.yaml` with the proper settings. there is an `admin_group` that you can set for administrators of the platform. 
+If using LDAP authentication, configure:
+```yaml
+ldap:
+  enabled: true
+  host: "your-ldap-server.domain.com"
+  port: 389
+  bind_dn: "cn=admin,dc=company,dc=com"
+  bind_pass: "your-ldap-password"
+  base_dn: "ou=users,dc=company,dc=com"
+  user_filter: "(uid=%s)"
+  admin_group: "cn=admins,ou=groups,dc=company,dc=com"
+```
+
+### Example Server Configuration
+```yaml
+server:
+  host: "0.0.0.0"
+  port: 8080
+  session_key: "your-secure-random-key"
+  upload_path: "./uploads"
+  static_path: "./web/static"
+  template_path: "./web/templates"
+  wordlists_path: "./wordlists"
+  rulesets_path: "./rules"
+  hashmodes_path: "./hashmodes.txt"
+
+admin:
+  username: "admin"
+  password: "your-admin-password"
+
+ldap:
+  enabled: false
+```
 
 ### Worker Configuration
 
@@ -121,7 +152,7 @@ Each worker node requires a `worker.json` configuration file:
     "server_url": "http://your-server:8080",
     "hostname": "worker-01",
     "checkin_interval": "30s",
-    "hashcat_path": "/usr/bin/hashcat/hashcat.bin",
+    "hashcat_path": "/usr/bin/hashcat",
     "rulesets_path": "/opt/rules",
     "temp_path": "/tmp/hashtasker"
 }
@@ -133,13 +164,13 @@ Each worker node requires a `worker.json` configuration file:
 - **hostname**: Unique identifier for this worker node
 - **checkin_interval**: How often to check for new jobs (e.g., "30s", "1m")
 - **hashcat_path**: Path to the hashcat executable
-- **rulesets_path**: Path to ruleset files (must be the same list of rules that the server has)
+- **rulesets_path**: Path to ruleset files (must match server rulesets)
 - **temp_path**: Directory for temporary files and results
 
 #### Worker Requirements
 
 **On Worker Nodes:**
-- Hashcat.bin/rulesets/etc accessible
+- Hashcat installed and accessible
 - Same ruleset files as configured on the server (in the same directory structure)
 - Network access to the HashTasker server
 - Sufficient disk space for temporary files and results
@@ -154,22 +185,33 @@ Worker nodes must have the same ruleset files available as the server. Ensure th
 ./hashtasker-server
 ```
 
-The web interface will be available at `http://server-ip:8080` (or your configured host/port).
+The web interface will be available at `http://localhost:8080` (or your configured host/port).
 
 ### Start Workers
 On each worker node:
 ```bash
-./hashtasker-worker -config worker.json
+./hashtasker-worker
 ```
 
 Workers will automatically register with the server and begin polling for jobs.
-
-## Upgrading
-To upgrade and not lose things, simply replace the binary file, but leave the config/db/etc. It will automatically take care of migrations needed and continue to use the previous data. 
 
 ## Default Credentials
 
 - **Username**: admin
 - **Password**: (as configured in config.yaml)
 
-- If you have ldap setup, you can start logging in with that, any user within the admin group detailed by the ldap settings will have admin priviledges.
+Change the default admin password immediately after installation.
+
+## Security Considerations
+
+- Use strong, unique passwords for all accounts
+- Generate a cryptographically secure session key
+- Use TLS/SSL in production environments
+- Regularly update passwords and session keys
+- Restrict network access to trusted hosts only
+- Consider using LDAP authentication for centralized user management
+- Remember to exclude your real `config.yaml` from version control
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
